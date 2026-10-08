@@ -39,6 +39,11 @@ os.makedirs(OUT_DIR, exist_ok=True)
 open(OUT, "w", encoding="utf-8").write(out)
 open(os.path.join(OUT_DIR, ".nojekyll"), "w").close()
 
+# The full edition (form + dashboard) is also published as docs/admin.html. It is safe to
+# publish: it holds only a SHA-256 hash of the admin password and the Sheets script refuses
+# to return records without that password.
+open(os.path.join(OUT_DIR, "admin.html"), "w", encoding="utf-8").write(html)
+
 print("Wrote %s (%d KB, removed %d HTML and %d JS admin blocks)" % (
     os.path.relpath(OUT, ROOT), len(out.encode("utf-8")) // 1024, len(html_blocks), len(js_blocks)))
 if not api or not api.group(1):

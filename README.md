@@ -14,9 +14,14 @@ Rasuwa flood.
 
 ## Public link for families
 
-Once GitHub Pages is enabled on this repository the form is at:
+Once GitHub Pages is enabled on this repository (Settings → Pages → branch
+`main`, folder `/docs`):
 
-`https://mofnepal.github.io/rasuwa-family-feedback/#form`
+- Family form: `https://mofnepal.github.io/rasuwa-family-feedback/#form`
+- Committee dashboard: `https://mofnepal.github.io/rasuwa-family-feedback/admin.html#admin`
+
+The dashboard page needs the admin password; the form page contains no admin
+code at all.
 
 ## 1. Quick start (single device, no setup)
 
