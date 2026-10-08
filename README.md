@@ -23,6 +23,17 @@ Once GitHub Pages is enabled on this repository (Settings → Pages → branch
 The dashboard page needs the admin password; the form page contains no admin
 code at all.
 
+## How records reach the committee without a server
+
+The live site has no central storage by choice. Each submission is saved in the
+browser that made it, and the success page offers **समितिलाई विवरण पठाउनुहोस्**,
+which shares the record as a small JSON file through the phone's share sheet
+(WhatsApp, Viber, email). A committee member opens the dashboard, goes to
+निर्यात तथा सेटिङ, and imports that file; duplicates are ignored. Committee
+members can also fill the form directly for families in person or by phone.
+The Google Sheets backend below remains available if central storage is wanted
+later.
+
 ## 1. Quick start (single device, no setup)
 
 Open `index.html` in Chrome, Edge, Safari or Firefox. It works from the file

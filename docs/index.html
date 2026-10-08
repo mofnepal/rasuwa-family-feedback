@@ -286,6 +286,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:var(--muted);fon
     <div class="ref num" id="ref"></div>
     <p class="hint" id="syncnote"></p>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px" class="no-print">
+      <button class="btn pri" id="send">समितिलाई विवरण पठाउनुहोस्</button>
       <button class="btn sec" id="print">प्रतिलिपि छाप्नुहोस्</button>
       <a class="btn navy" href="#form" id="again">अर्को परिवारको फारम भर्नुहोस्</a>
     </div>
@@ -431,7 +432,6 @@ function renderForm(){
     <div class="card"><div class="bd">
       <h1 style="font-size:1.5rem">पीडित परिवार विवरण तथा समस्या फारम</h1>
       <p style="color:var(--ink-2);margin-top:6px">रसुवा बाढीमा बेपत्ता वा मृत्यु भएका भन्सार कार्यालय, रसुवाका कर्मचारीका परिवारले भर्ने। <span class="en">Family details &amp; feedback form. Fields marked * are required.</span></p>
-      ${PUBLIC_BUILD&&!CONFIG.API_URL?`<div class="banner" style="margin:14px 0 0">सूचना: यो फारम हाल परीक्षण अवस्थामा छ। केन्द्रीय सर्भर जडान नभएसम्म यहाँ पेस गरिएको विवरण समितिसम्म पुग्दैन।</div>`:""}
     </div></div>
 
     <section class="card"><div class="hd"><span class="step">०१</span><h2>निवेदकको (फारम भर्ने व्यक्तिको) विवरण</h2><span class="en">Applicant details</span></div>
@@ -517,7 +517,7 @@ function renderForm(){
     </div></section>
 
     <div class="formbar">
-      <span class="hint" id="fb-note">तथ्याङ्क ${CONFIG.API_URL?"समितिको सर्भरमा":"यही यन्त्रमा"} सुरक्षित हुनेछ।</span>
+      <span class="hint" id="fb-note">* चिन्ह लागेका विवरण अनिवार्य छन्।</span>
       <div style="display:flex;gap:10px"><button type="button" class="btn sec" id="reset">खाली गर्नुहोस्</button><button class="btn pri" type="submit" id="submit">फारम पेस गर्नुहोस्</button></div>
     </div>
   </form></div>`;
@@ -568,13 +568,26 @@ async function onSubmit(e){
   $("#submit").disabled=true; $("#submit").textContent="पेस गर्दै...";
   const res=await Store.submit(rec);
   sessionStorage.setItem("lastRef",JSON.stringify({ref:rec.ref,remote:res.remote}));
+  try{ sessionStorage.setItem("lastRecord",JSON.stringify(rec)); }catch(e){}
   location.hash="#done";
 }
 function renderSuccess(){
   app.innerHTML=""; app.appendChild($("#tpl-success").content.cloneNode(true));
   const last=JSON.parse(sessionStorage.getItem("lastRef")||"{}");
   $("#ref").textContent=last.ref||"—";
-  $("#syncnote").textContent = CONFIG.API_URL ? (last.remote?"विवरण समितिको केन्द्रीय अभिलेखमा पठाइयो।":"इन्टरनेट समस्याका कारण विवरण केन्द्रीय अभिलेखमा पठाउन सकिएन र यही यन्त्रमा मात्र सुरक्षित छ। कृपया समितिलाई जानकारी दिनुहोस्।") : (PUBLIC_BUILD ? "यो परीक्षण संस्करण हो: केन्द्रीय सर्भर जडान नभएकाले विवरण समितिसम्म पुगेको छैन।" : "विवरण यही यन्त्रमा सुरक्षित गरिएको छ। समितिको सदस्यले तथ्याङ्क निर्यात गरी केन्द्रमा पठाउनेछन्।");
+  $("#syncnote").textContent = CONFIG.API_URL ? (last.remote?"विवरण समितिको केन्द्रीय अभिलेखमा पठाइयो।":"इन्टरनेट समस्याका कारण विवरण केन्द्रीय अभिलेखमा पठाउन सकिएन। कृपया तलको बटनबाट समितिलाई पठाउनुहोस्।") : "आफ्नो विवरण समितिसम्म पुर्‍याउन तलको बटन थिची WhatsApp, Viber वा इमेलबाट पठाउनुहोस्।";
+  $("#send").hidden = !!(CONFIG.API_URL && last.remote);
+  $("#send").onclick = async () => {
+    let rec=null; try{ rec=JSON.parse(sessionStorage.getItem("lastRecord")||"null"); }catch(e){}
+    if(!rec){ toast("पठाउने विवरण भेटिएन"); return; }
+    const json=JSON.stringify(rec,null,2); const name=`${rec.ref}.json`;
+    const title=`परिवार विवरण ${rec.ref} — ${rec.employee.name}`;
+    try{
+      if(navigator.canShare && window.File){ const file=new File([json],name,{type:"application/json"}); if(navigator.canShare({files:[file]})){ await navigator.share({title,files:[file]}); toast("पठाइयो"); return; } }
+      if(navigator.share){ await navigator.share({title,text:json}); toast("पठाइयो"); return; }
+    }catch(e){ if(e&&e.name==="AbortError") return; }
+    location.href="mailto:?subject="+encodeURIComponent(title)+"&body="+encodeURIComponent("कृपया यो विवरण ड्यासबोर्डको 'निर्यात तथा सेटिङ' मा आयात गर्नुहोस्।\n\n"+json);
+  };
   $("#print").onclick=()=>window.print();
 }
 

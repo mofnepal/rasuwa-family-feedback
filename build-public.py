@@ -47,6 +47,5 @@ open(os.path.join(OUT_DIR, "admin.html"), "w", encoding="utf-8").write(html)
 print("Wrote %s (%d KB, removed %d HTML and %d JS admin blocks)" % (
     os.path.relpath(OUT, ROOT), len(out.encode("utf-8")) // 1024, len(html_blocks), len(js_blocks)))
 if not api or not api.group(1):
-    print("WARNING: CONFIG.API_URL is empty. The public form will show a test-mode notice and "
-          "submissions will not reach the committee until the Google Sheets URL is set in index.html "
-          "and this build is re-run.")
+    print("Note: CONFIG.API_URL is empty, so families send their record to the committee with the "
+          "share button on the success page and the committee imports it in the dashboard.")
