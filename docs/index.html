@@ -362,7 +362,7 @@ const Store = {
   async fetchAll(){
     let list=this.local();
     if(CONFIG.API_URL){
-      try{ const r=await fetch(CONFIG.API_URL+"?action=list&key="+encodeURIComponent(Auth.key())); const j=await r.json(); (j.records||[]).forEach(rec=>list=this.upsert(list,rec)); this.saveLocal(list); }
+      try{ const r=await fetch(CONFIG.API_URL+"?action=list&key="+encodeURIComponent(typeof Auth!=="undefined"?Auth.key():"")); const j=await r.json(); (j.records||[]).forEach(rec=>list=this.upsert(list,rec)); this.saveLocal(list); }
       catch(e){ console.warn("remote fetch failed",e); toast("सर्भरबाट तथ्याङ्क ल्याउन सकिएन — स्थानीय तथ्याङ्क देखाइँदैछ"); }
     }
     return list.sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
