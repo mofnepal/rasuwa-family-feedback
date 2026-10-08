@@ -8,6 +8,8 @@ Rasuwa flood.
 |---|---|
 | `index.html` | The whole app: landing page, family intake form, Ministry dashboard |
 | `backend/Code.gs` | Optional Google Sheets backend so submissions from many phones land in one place |
+| `build-public.py` | Builds the public, form-only edition into `docs/` for GitHub Pages |
+| `docs/index.html` | Generated public edition: family form only, no login, no dashboard, no credentials |
 | `README.md` | This guide |
 
 ## Public link for families
@@ -52,9 +54,9 @@ account the Ministry controls.
    `ADMIN_KEY` = the dashboard admin password. Reading records requires it;
    submitting does not.
 6. In `index.html`, set `API_URL: "https://script.google.com/macros/s/.../exec"`.
-7. Host `index.html` anywhere families can reach it (the Ministry web server,
-   GitHub Pages, Netlify Drop, or even sent as a file). Share the link ending in
-   `#form`.
+7. Host the **public edition** (`docs/index.html`, see section 2b) anywhere
+   families can reach it: the Ministry web server or GitHub Pages. Share the
+   link ending in `#form`. Keep the full `index.html` on committee devices only.
 
 Now every submission is appended to the sheet (one row per family with the full
 record as JSON), and the dashboard on any device loads from the sheet when an
@@ -63,6 +65,30 @@ offline.
 
 Re-run **Deploy → Manage deployments → Edit → New version** whenever you edit
 the script.
+
+## 2b. Public edition for GitHub Pages
+
+The full `index.html` contains the dashboard and the admin password, so it must
+never be published on a public URL. `build-public.py` strips everything between
+the `ADMIN:START` / `ADMIN:END` markers and writes a form-only page to
+`docs/index.html`:
+
+```bash
+python3 build-public.py
+```
+
+The build refuses to write if any admin code or credential would survive, and
+warns when `CONFIG.API_URL` is empty (the public form then shows a test-mode
+notice, because submissions cannot reach the committee without the Sheets
+backend). Re-run it after every change to `index.html`, then commit `docs/`.
+
+To publish: GitHub repository **Settings → Pages → Source: Deploy from a
+branch → Branch `main`, folder `/docs` → Save**. The form is then live at
+`https://<org>.github.io/<repo>/#form`. Pages on a private repository needs a
+paid GitHub plan; on a free plan the repository must be public, which is safe
+for the `docs/` edition but means the Sheets URL is visible in its source.
+Committee members open the full `index.html` from their own device; it reads
+the same Google Sheet.
 
 ## 3. What the form collects
 
