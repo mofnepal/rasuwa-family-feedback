@@ -6,9 +6,6 @@
 <title>रसुवा बाढी पीडित परिवार समन्वय</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
-<!-- ADMIN:START -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<!-- ADMIN:END -->
 <style>
 /* Layout: crimson hairline + navy government band on a cool off-white ground; one centred column (max 1180px) with white cards for each form section and dashboard panel. Single deliberate light theme. */
 :root{
@@ -250,7 +247,6 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:var(--muted);fon
     <nav id="nav">
       <a href="#home" data-route="home">गृहपृष्ठ</a>
       <a href="#form" data-route="form">परिवार फारम</a>
-      <!-- ADMIN:START --><a href="#admin" data-route="admin">मन्त्रालय प्रवेश</a><!-- ADMIN:END -->
     </nav>
   </div>
 </header>
@@ -276,13 +272,6 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:var(--muted);fon
         <p>निवेदक, बेपत्ता/मृतक कर्मचारी, परिवारका सदस्य, आर्थिक अवस्था र समस्याहरूको विवरण भर्नुहोस्।</p>
         <span class="go">फारम भर्नुहोस् →</span>
       </a>
-      <!-- ADMIN:START -->
-      <a class="card choice navy" href="#admin">
-        <h3>मन्त्रालय / समिति प्रवेश <span class="en">Ministry dashboard</span></h3>
-        <p>प्राप्त विवरणको सारांश, चार्ट, परिवार सूची र मागहरूको वर्गीकृत विश्लेषण हेर्नुहोस्। प्रयोगकर्ता नाम र पासवर्ड आवश्यक।</p>
-        <span class="go">प्रवेश गर्नुहोस् →</span>
-      </a>
-      <!-- ADMIN:END -->
     </div>
   </div>
 </div>
@@ -304,35 +293,13 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:var(--muted);fon
 </div>
 </template>
 
-<!-- ADMIN:START -->
-<template id="tpl-login">
-<div class="wrap">
-  <div class="card login">
-    <div class="hd"><h2>मन्त्रालय / समिति प्रवेश</h2><span class="en">Restricted access</span></div>
-    <form class="bd" id="loginform" autocomplete="off">
-      <div class="f"><label class="l" for="lu">प्रयोगकर्ता नाम <span class="en">Username</span></label><input class="inp" id="lu" required autocomplete="username"></div>
-      <div class="f"><label class="l" for="lp">पासवर्ड <span class="en">Password</span></label><input class="inp" id="lp" type="password" required autocomplete="current-password"></div>
-      <p class="err" id="lerr" hidden>प्रयोगकर्ता नाम वा पासवर्ड मिलेन।</p>
-      <button class="btn navy" type="submit">प्रवेश गर्नुहोस्</button>
-      <p class="hint">यो पृष्ठ मन्त्रालय तथा समितिका अधिकृत सदस्यका लागि मात्र हो।</p>
-    </form>
-  </div>
-</div>
-</template>
-<!-- ADMIN:END -->
 
 <script>
 /* =========================================================
    CONFIGURATION — edit these before distributing the link
    ========================================================= */
-const PUBLIC_BUILD = false; // set to true by build-public.py
+const PUBLIC_BUILD = true; // set to true by build-public.py
 const CONFIG = {
-  /* ADMIN:START */
-  ADMIN_USER: "mof_admin",
-  // SHA-256 hash of the admin password. The password itself is never stored in this file.
-  // To change it: log in → निर्यात तथा सेटिङ → "नयाँ पासवर्डको ह्यास" → paste the hash here.
-  ADMIN_PASS_SHA256: "89dfdb5347e702f10b4ab3c1effff370078642a06c556f8dfebec7c3b036677c",
-  /* ADMIN:END */
   // Google Apps Script web-app URL (see backend/Code.gs + README). Leave empty to store on this device only.
   API_URL: "",
   STORAGE_KEY: "mof_rasuwa_submissions_v1",
@@ -611,306 +578,6 @@ function renderSuccess(){
   $("#print").onclick=()=>window.print();
 }
 
-/* ADMIN:START */
-/* =========================================================
-   ADMIN
-   ========================================================= */
-async function sha256(str){ if(!(window.crypto&&crypto.subtle)) throw new Error("nocrypto"); const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(str)); return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join(""); }
-const Auth={
-  ok(){ return sessionStorage.getItem("mof_admin")==="1"; },
-  key(){ return sessionStorage.getItem("mof_admin_key")||""; },
-  async login(u,p){ if(u!==CONFIG.ADMIN_USER) return false; const h=await sha256(p); if(h!==CONFIG.ADMIN_PASS_SHA256) return false; sessionStorage.setItem("mof_admin","1"); sessionStorage.setItem("mof_admin_key",p); return true; },
-  logout(){ sessionStorage.removeItem("mof_admin"); sessionStorage.removeItem("mof_admin_key"); }
-};
-let DATA=[]; let adminTab="dash";
-
-async function renderAdmin(){
-  if(!Auth.ok()){
-    app.innerHTML=""; app.appendChild($("#tpl-login").content.cloneNode(true));
-    $("#loginform").addEventListener("submit",async e=>{ e.preventDefault(); try{ if(await Auth.login($("#lu").value.trim(),$("#lp").value)){ renderAdmin(); } else { $("#lerr").hidden=false; } }catch(err){ $("#lerr").textContent="यो ब्राउजरमा सुरक्षित प्रवेश उपलब्ध छैन। कृपया https:// लिङ्क वा नयाँ ब्राउजर प्रयोग गर्नुहोस्।"; $("#lerr").hidden=false; } });
-    return;
-  }
-  app.innerHTML=`<div class="wrap"><div class="empty">तथ्याङ्क लोड हुँदैछ…</div></div>`;
-  DATA=await Store.fetchAll();
-  app.innerHTML=`<div class="wrap">
-    <div class="adminbar">
-      <div><h1 style="font-size:1.4rem">समन्वय समिति ड्यासबोर्ड</h1><div class="who">${CONFIG.API_URL?"केन्द्रीय सर्भरसँग जोडिएको":"यस यन्त्रको तथ्याङ्क"} · अन्तिम अद्यावधिक ${new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}</div></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec sm" id="refresh">↻ अद्यावधिक गर्नुहोस्</button><button class="btn sec sm" id="logout">बाहिर निस्कनुहोस्</button></div>
-    </div>
-    ${DATA.some(r=>r.sample)?`<div class="banner">यस सूचीमा परीक्षणका लागि राखिएका <b>नमुना (sample) रेकर्ड</b> छन्। वास्तविक प्रयोगअघि हटाउनुहोस्। <button class="btn sec sm" id="rm-sample">नमुना हटाउनुहोस्</button></div>`:""}
-    <div class="tabs" role="tablist">
-      <button class="tab" data-tab="dash">ड्यासबोर्ड</button>
-      <button class="tab" data-tab="list">परिवार सूची <span class="num">(${DATA.length})</span></button>
-      <button class="tab" data-tab="cats">माग / समस्या विश्लेषण</button>
-      <button class="tab" data-tab="members">सदस्य तथा शिक्षा</button>
-      <button class="tab" data-tab="settings">निर्यात तथा सेटिङ</button>
-    </div>
-    <div id="panel"></div></div>`;
-  $("#logout").onclick=()=>{Auth.logout();renderAdmin();};
-  $("#refresh").onclick=()=>renderAdmin();
-  $("#rm-sample")?.addEventListener("click",()=>{ Store.saveLocal(Store.local().filter(r=>!r.sample)); toast("नमुना रेकर्ड हटाइयो"); renderAdmin(); });
-  $$(".tab").forEach(t=>t.onclick=()=>{adminTab=t.dataset.tab;showTab();});
-  showTab();
-}
-function showTab(){
-  $$(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===adminTab));
-  Charts.destroyAll();
-  const p=$("#panel");
-  ({dash:renderDash,list:renderList,cats:renderCats,members:renderMembers,settings:renderSettings})[adminTab](p);
-}
-
-/* ---- aggregation ---- */
-function agg(data){
-  const a={n:data.length,missing:0,dead:0,members:0,dependents:0,children:0,students:0,sole:0,loan:0,loanTotal:0,cats:{},catsHigh:{},age:{},rel:{},district:{},income:{},housing:{},type:{},byDay:{},docs:{},schoolType:{},feeTotal:0,elderly:0,health:0,femaleMembers:0};
-  CATS.forEach(c=>{a.cats[c.id]=0;a.catsHigh[c.id]=0;});
-  data.forEach(r=>{
-    a[r.employee.status]=(a[r.employee.status]||0)+1;
-    if(r.employee.soleEarner==="yes") a.sole++;
-    if(r.economy.hasLoan){a.loan++;a.loanTotal+=Number(r.economy.loanAmount)||0;}
-    a.type[r.employee.type||"—"]=(a.type[r.employee.type||"—"]||0)+1;
-    a.income[r.economy.incomeBand||"—"]=(a.income[r.economy.incomeBand||"—"]||0)+1;
-    a.housing[r.economy.housing||"—"]=(a.housing[r.economy.housing||"—"]||0)+1;
-    const d=r.applicant.origin?.district||r.applicant.current?.district||"अज्ञात"; a.district[d]=(a.district[d]||0)+1;
-    const day=r.createdAt.slice(0,10); a.byDay[day]=(a.byDay[day]||0)+1;
-    (r.docs||[]).forEach(x=>a.docs[x]=(a.docs[x]||0)+1);
-    Object.entries(r.problems||{}).forEach(([k,v])=>{a.cats[k]=(a.cats[k]||0)+1; if(v.priority==="high") a.catsHigh[k]=(a.catsHigh[k]||0)+1;});
-    (r.members||[]).forEach(m=>{
-      a.members++; if(m.dependent) a.dependents++; const ag=Number(m.age); if(ag<18) a.children++; if(ag>=60) a.elderly++;
-      if(m.occupation==="विद्यार्थी"){a.students++; a.feeTotal+=Number(m.fee)||0; a.schoolType[m.schoolType||"अज्ञात"]=(a.schoolType[m.schoolType||"अज्ञात"]||0)+1;}
-      if(m.health) a.health++; if(m.gender==="महिला") a.femaleMembers++;
-      const b=ageBand(m.age); a.age[b]=(a.age[b]||0)+1; a.rel[m.relation||"अन्य"]=(a.rel[m.relation||"अन्य"]||0)+1;
-    });
-  });
-  return a;
-}
-const sortEntries=o=>Object.entries(o).sort((x,y)=>y[1]-x[1]);
-
-/* ---- Chart helpers ---- */
-const chartBase={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{family:"Mukta",size:13},color:"#444B62",boxWidth:12,boxHeight:12,usePointStyle:true}},tooltip:{backgroundColor:"#1A1F2E",titleFont:{family:"Mukta"},bodyFont:{family:"Mukta"},padding:10,cornerRadius:6}}};
-const axis=(extra={})=>({grid:{color:"#E9ECF4",drawBorder:false},ticks:{font:{family:"Mukta",size:12},color:"#747C98",precision:0},border:{display:false},...extra});
-const valueLabels={id:"vl",afterDatasetsDraw(c){ if(c.config.type==="doughnut"||c.config.type==="line") return; const {ctx}=c; ctx.save(); ctx.font="600 12px 'Public Sans', sans-serif"; ctx.fillStyle="#1A1F2E"; const horiz=c.options.indexAxis==="y"; const stacked=!!(c.options.scales?.x?.stacked||c.options.scales?.y?.stacked); ctx.textAlign=horiz?"left":"center"; ctx.textBaseline=horiz?"middle":"bottom";
-  if(stacked){ const visible=c.data.datasets.map((d,i)=>i).filter(i=>!c.getDatasetMeta(i).hidden); if(!visible.length){ctx.restore();return;} const lastMeta=c.getDatasetMeta(visible[visible.length-1]); lastMeta.data.forEach((el,j)=>{ const total=visible.reduce((t,i)=>t+(Number(c.data.datasets[i].data[j])||0),0); if(!total) return; ctx.fillText(total, horiz?el.x+6:el.x, horiz?el.y:el.y-4); }); }
-  else c.data.datasets.forEach((ds,i)=>{ const meta=c.getDatasetMeta(i); if(meta.hidden) return; meta.data.forEach((el,j)=>{ const v=ds.data[j]; if(!v) return; ctx.fillText(v, horiz?el.x+6:el.x, horiz?el.y:el.y-4); }); });
-  ctx.restore(); }};
-function noChart(el){ el.innerHTML=`<div class="empty">चार्ट लाइब्रेरी लोड हुन सकेन (इन्टरनेट जडान आवश्यक)। तालिका ट्याबहरूमा तथ्याङ्क हेर्न सकिन्छ।</div>`; }
-function mkChart(sel,cfg){ const el=$(sel); if(!window.Chart){ noChart(el.parentElement); return; } return Charts.add(new Chart(el,cfg)); }
-function bar(sel,labels,data,{horizontal=false,color=SERIES[1],label="परिवार"}={}){
-  return mkChart(sel,{type:"bar",plugins:[valueLabels],data:{labels,datasets:[{label,data,backgroundColor:color,borderRadius:4,borderSkipped:"start",maxBarThickness:34,categoryPercentage:.7}]},options:{...chartBase,indexAxis:horizontal?"y":"x",layout:{padding:{right:horizontal?28:0,top:horizontal?0:16}},plugins:{...chartBase.plugins,legend:{display:false}},scales:{x:axis(horizontal?{beginAtZero:true}:{grid:{display:false}}),y:axis(horizontal?{grid:{display:false},ticks:{font:{family:"Mukta",size:12},color:"#444B62",autoSkip:false}}:{beginAtZero:true})}}});
-}
-
-/* ---- Dashboard ---- */
-function renderDash(p){
-  if(!DATA.length){ p.innerHTML=`<div class="card"><div class="empty"><b>अहिलेसम्म कुनै परिवारको विवरण प्राप्त भएको छैन</b>परिवारले <a href="#form">फारम</a> भरेपछि यहाँ सारांश, चार्ट र सूची देखिनेछ। परीक्षणका लागि "निर्यात तथा सेटिङ" ट्याबबाट नमुना तथ्याङ्क लोड गर्न सकिन्छ।</div></div>`; return; }
-  const a=agg(DATA);
-  const pct=(x,y)=>y?Math.round(x/y*100):0;
-  p.innerHTML=`
-  <div class="kpis">
-    <div class="card kpi red"><div class="k">प्रभावित परिवार</div><div class="v">${a.n}</div><div class="sub">कुल दर्ता फारम</div></div>
-    <div class="card kpi amber"><div class="k">बेपत्ता कर्मचारी</div><div class="v">${a.missing}</div><div class="sub">मृत्यु पुष्टि भएका ${a.dead}</div></div>
-    <div class="card kpi"><div class="k">कुल आश्रित सदस्य</div><div class="v">${a.dependents}</div><div class="sub">${a.members} सदस्यमध्ये · औसत परिवार आकार ${(a.members/a.n).toFixed(1)}</div></div>
-    <div class="card kpi"><div class="k">१८ वर्षमुनिका बालबालिका</div><div class="v">${a.children}</div><div class="sub">विद्यार्थी ${a.students} · ६० माथि ${a.elderly}</div></div>
-    <div class="card kpi red"><div class="k">एक मात्र आयस्रोत गुमाएका</div><div class="v">${pct(a.sole,a.n)}%</div><div class="sub">${a.sole} परिवार</div></div>
-    <div class="card kpi amber"><div class="k">ऋण भएका परिवार</div><div class="v">${a.loan}</div><div class="sub">कुल रु. ${a.loanTotal.toLocaleString("en-IN")}</div></div>
-    <div class="card kpi green"><div class="k">अति जरुरी माग</div><div class="v">${Object.values(a.catsHigh).reduce((x,y)=>x+y,0)}</div><div class="sub">${Object.values(a.cats).reduce((x,y)=>x+y,0)} कुल मागमध्ये</div></div>
-    <div class="card kpi"><div class="k">विद्यार्थीको वार्षिक शुल्क</div><div class="v">रु. ${(a.feeTotal/1000).toFixed(0)}K</div><div class="sub">परिवारले बताएको अनुमान</div></div>
-  </div>
-  <div class="charts">
-    <div class="card chart wide"><div class="hd"><h3>परिवारले उठाएका समस्या/मागका विषय</h3><span class="en">Families raising each category · dark = marked urgent</span></div><div class="bd"><div class="cv tall"><canvas id="c-cats"></canvas></div></div></div>
-    <div class="card chart"><div class="hd"><h3>कर्मचारीको अवस्था</h3><span class="en">Employee status</span></div><div class="bd"><div class="cv"><canvas id="c-status"></canvas></div></div></div>
-    <div class="card chart"><div class="hd"><h3>सेवाको किसिम</h3><span class="en">Employment type</span></div><div class="bd"><div class="cv"><canvas id="c-type"></canvas></div></div></div>
-    <div class="card chart"><div class="hd"><h3>परिवार सदस्य — उमेर समूह</h3><span class="en">Household members by age band</span></div><div class="bd"><div class="cv"><canvas id="c-age"></canvas></div></div></div>
-    <div class="card chart"><div class="hd"><h3>कर्मचारीसँगको नाता</h3><span class="en">Members by relation</span></div><div class="bd"><div class="cv"><canvas id="c-rel"></canvas></div></div></div>
-    <div class="card chart"><div class="hd"><h3>घटनाअघिको मासिक आम्दानी</h3><span class="en">Household income band</span></div><div class="bd"><div class="cv"><canvas id="c-income"></canvas></div></div></div>
-    <div class="card chart"><div class="hd"><h3>हालको आवास अवस्था</h3><span class="en">Housing</span></div><div class="bd"><div class="cv"><canvas id="c-housing"></canvas></div></div></div>
-    <div class="card chart"><div class="hd"><h3>मूल जिल्ला</h3><span class="en">Origin district</span></div><div class="bd"><div class="cv"><canvas id="c-district"></canvas></div></div></div>
-    <div class="card chart"><div class="hd"><h3>फारम प्राप्ति (दिन अनुसार)</h3><span class="en">Submissions per day</span></div><div class="bd"><div class="cv"><canvas id="c-days"></canvas></div></div></div>
-    <div class="card chart wide"><div class="hd"><h3>परिवारसँग उपलब्ध कागजात</h3><span class="en">Documents available · lower bars = documentation support needed</span></div><div class="bd"><div class="cv"><canvas id="c-docs"></canvas></div></div></div>
-  </div>
-  <div class="card" style="margin-top:16px"><div class="hd"><h3 style="font-size:1rem">पछिल्ला मुख्य मागहरू</h3><span class="en">Latest main requests</span></div><div class="bd" style="display:grid;gap:10px">
-    ${DATA.slice(0,6).map(r=>`<div class="ask"><div class="who"><span class="pill ${STATUS[r.employee.status].cls}">${STATUS[r.employee.status].ne}</span><b>${esc(r.employee.name)}</b> · निवेदक ${esc(r.applicant.name)} (${esc(r.applicant.relation)}) · <span class="num">${fmtDate(r.createdAt)}</span> <a data-open="${r.id}">विवरण →</a></div><div>${esc(r.mainAsk)}</div></div>`).join("")}
-  </div></div>`;
-  p.addEventListener("click",e=>{const id=e.target.dataset.open; if(id) openDetail(id);});
-
-  const catOrder=CATS.map(c=>c.id).sort((x,y)=>a.cats[y]-a.cats[x]).filter(k=>a.cats[k]>0);
-  mkChart("#c-cats",{type:"bar",plugins:[valueLabels],data:{labels:catOrder.map(k=>CATS.find(c=>c.id===k).ne),datasets:[{label:"अति जरुरी",data:catOrder.map(k=>a.catsHigh[k]),backgroundColor:SERIES[0],borderRadius:4,borderSkipped:"start",maxBarThickness:26},{label:"मध्यम / सामान्य",data:catOrder.map(k=>a.cats[k]-a.catsHigh[k]),backgroundColor:SERIES[1],borderRadius:4,borderSkipped:"start",maxBarThickness:26}]},options:{...chartBase,indexAxis:"y",layout:{padding:{right:30}},scales:{x:{...axis({beginAtZero:true}),stacked:true},y:{...axis({grid:{display:false},ticks:{font:{family:"Mukta",size:12},color:"#444B62",autoSkip:false}}),stacked:true}}}});
-  mkChart("#c-status",{type:"doughnut",data:{labels:["बेपत्ता","मृत्यु पुष्टि"],datasets:[{data:[a.missing,a.dead],backgroundColor:[SERIES[3],SERIES[0]],borderColor:"#fff",borderWidth:2,hoverOffset:6}]},options:{...chartBase,cutout:"62%",plugins:{...chartBase.plugins,legend:{...chartBase.plugins.legend,position:"bottom"}}}});
-  const types=sortEntries(a.type); mkChart("#c-type",{type:"doughnut",data:{labels:types.map(x=>x[0]),datasets:[{data:types.map(x=>x[1]),backgroundColor:SERIES.slice(1),borderColor:"#fff",borderWidth:2,hoverOffset:6}]},options:{...chartBase,cutout:"62%",plugins:{...chartBase.plugins,legend:{...chartBase.plugins.legend,position:"bottom"}}}});
-  bar("#c-age",AGE_ORDER.filter(b=>a.age[b]),AGE_ORDER.filter(b=>a.age[b]).map(b=>a.age[b]),{color:SERIES[2],label:"सदस्य"});
-  const rel=sortEntries(a.rel).slice(0,10); bar("#c-rel",rel.map(x=>x[0]),rel.map(x=>x[1]),{horizontal:true,color:SERIES[4],label:"सदस्य"});
-  bar("#c-income",INCOME_BANDS.filter(b=>a.income[b]),INCOME_BANDS.filter(b=>a.income[b]).map(b=>a.income[b]),{color:SERIES[1]});
-  const hs=sortEntries(a.housing); bar("#c-housing",hs.map(x=>x[0]),hs.map(x=>x[1]),{horizontal:true,color:SERIES[5]});
-  const ds=sortEntries(a.district).slice(0,8); bar("#c-district",ds.map(x=>x[0]),ds.map(x=>x[1]),{horizontal:true,color:SERIES[1]});
-  const days=Object.keys(a.byDay).sort(); mkChart("#c-days",{type:"line",data:{labels:days.map(d=>fmtDate(d)),datasets:[{label:"फारम",data:days.map(d=>a.byDay[d]),borderColor:SERIES[0],backgroundColor:"rgba(209,36,63,.12)",fill:true,tension:.3,borderWidth:2,pointRadius:4,pointBackgroundColor:"#fff",pointBorderColor:SERIES[0],pointBorderWidth:2}]},options:{...chartBase,plugins:{...chartBase.plugins,legend:{display:false}},scales:{x:axis({grid:{display:false}}),y:axis({beginAtZero:true})}}});
-  const docs=DOCS.map(d=>[d,a.docs[d]||0]); bar("#c-docs",docs.map(x=>x[0]),docs.map(x=>x[1]),{color:SERIES[2]});
-}
-
-/* ---- List ---- */
-function renderList(p){
-  p.innerHTML=`<div class="card"><div class="bd">
-    <div class="toolbar">
-      <input class="inp search" id="q" placeholder="नाम, फोन, पद, जिल्ला, सन्दर्भ नं. खोज्नुहोस्…">
-      <select class="inp" id="fs"><option value="">सबै अवस्था</option>${Object.entries(STATUS).map(([k,v])=>`<option value="${k}">${v.ne}</option>`).join("")}</select>
-      <select class="inp" id="fc"><option value="">सबै विषय</option>${CATS.map(c=>`<option value="${c.id}">${c.ne}</option>`).join("")}</select>
-      <select class="inp" id="fp"><option value="">सबै प्राथमिकता</option><option value="high">अति जरुरी मात्र</option></select>
-    </div>
-    <div class="tablewrap"><table><thead><tr><th>सन्दर्भ</th><th>कर्मचारी</th><th>अवस्था</th><th>निवेदक</th><th>सम्पर्क</th><th>सदस्य</th><th>मागका विषय</th><th>मिति</th></tr></thead><tbody id="rows"></tbody></table></div>
-    <p class="hint" id="cnt" style="margin-top:10px"></p>
-  </div></div>`;
-  const draw=()=>{
-    const q=$("#q").value.trim().toLowerCase(), fs=$("#fs").value, fc=$("#fc").value, fp=$("#fp").value;
-    const rows=DATA.filter(r=>{
-      if(fs&&r.employee.status!==fs) return false;
-      if(fc&&!r.problems[fc]) return false;
-      if(fp&&!Object.values(r.problems).some(v=>v.priority==="high")) return false;
-      if(q){ const hay=[r.ref,r.employee.name,r.employee.post,r.applicant.name,r.applicant.phone,r.applicant.origin?.district,r.applicant.current?.district,r.mainAsk].join(" ").toLowerCase(); if(!hay.includes(q)) return false; }
-      return true;
-    });
-    $("#rows").innerHTML=rows.map(r=>`<tr class="row" data-id="${r.id}">
-      <td class="num">${esc(r.ref)}${r.sample?' <span class="pill sample">नमुना</span>':""}</td>
-      <td><b>${esc(r.employee.name)}</b><br><span class="hint">${esc(r.employee.post)} · ${esc(r.employee.type)}</span></td>
-      <td><span class="pill ${STATUS[r.employee.status].cls}">${STATUS[r.employee.status].ne}</span></td>
-      <td>${esc(r.applicant.name)}<br><span class="hint">${esc(r.applicant.relation)}</span></td>
-      <td class="num">${esc(r.applicant.phone)}</td>
-      <td class="num">${r.members.length} <span class="hint">(बाल ${r.members.filter(m=>Number(m.age)<18).length})</span></td>
-      <td>${Object.entries(r.problems).map(([k,v])=>`<span class="pill cat ${v.priority==="high"?"p-high":""}">${CATS.find(c=>c.id===k)?.ne.split(" (")[0]}</span>`).join("")}</td>
-      <td class="num">${fmtDate(r.createdAt)}</td></tr>`).join("") || `<tr><td colspan="8" class="empty">कुनै रेकर्ड भेटिएन</td></tr>`;
-    $("#cnt").textContent=`${rows.length} / ${DATA.length} परिवार देखाइएको`;
-  };
-  ["q","fs","fc","fp"].forEach(id=>$("#"+id).addEventListener("input",draw));
-  $("#rows").addEventListener("click",e=>{const tr=e.target.closest("tr.row"); if(tr) openDetail(tr.dataset.id);});
-  draw();
-}
-
-/* ---- Category analysis ---- */
-function renderCats(p){
-  if(!DATA.length){ p.innerHTML=`<div class="card"><div class="empty"><b>तथ्याङ्क छैन</b></div></div>`; return; }
-  const a=agg(DATA);
-  const order=CATS.slice().sort((x,y)=>a.cats[y.id]-a.cats[x.id]);
-  p.innerHTML=`<div class="banner info">प्रत्येक विषयअन्तर्गत परिवारले आफ्नै शब्दमा लेखेका समस्या/माग देखाइएको छ। अति जरुरी चिन्ह लागेका माथि छन्।</div>`+order.map(c=>{
-    const items=DATA.filter(r=>r.problems[c.id]).sort((x,y)=>(x.problems[c.id].priority==="high"?0:1)-(y.problems[c.id].priority==="high"?0:1));
-    if(!items.length) return "";
-    return `<div class="card catblock"><div class="hd"><h2 style="font-size:1.05rem">${c.ne} <span class="en">${c.en}</span></h2><span class="count">${items.length} परिवार · ${a.catsHigh[c.id]} अति जरुरी</span></div><div class="bd" style="padding-top:8px">
-      ${items.map(r=>{const v=r.problems[c.id]; return `<div class="ask"><div class="who"><span class="pill ${PRIO[v.priority].cls}">${PRIO[v.priority].ne}</span><b>${esc(r.employee.name)}</b> (${STATUS[r.employee.status].ne}) · ${esc(r.applicant.name)}, ${esc(r.applicant.relation)} · ${esc(r.applicant.origin?.district||"")} <a data-open="${r.id}">विवरण →</a></div><div>${v.details?esc(v.details):'<span class="hint">विवरण लेखिएको छैन</span>'}</div></div>`;}).join("")}
-    </div></div>`;}).join("");
-  p.addEventListener("click",e=>{const id=e.target.dataset.open; if(id) openDetail(id);});
-}
-
-/* ---- Members & education ---- */
-function renderMembers(p){
-  if(!DATA.length){ p.innerHTML=`<div class="card"><div class="empty"><b>तथ्याङ्क छैन</b></div></div>`; return; }
-  const rows=[]; DATA.forEach(r=>(r.members||[]).forEach(m=>rows.push({r,m})));
-  const students=rows.filter(x=>x.m.occupation==="विद्यार्थी");
-  const a=agg(DATA);
-  p.innerHTML=`
-  <div class="kpis" style="margin-bottom:16px">
-    <div class="card kpi"><div class="k">कुल सदस्य</div><div class="v">${rows.length}</div><div class="sub">महिला ${a.femaleMembers}</div></div>
-    <div class="card kpi"><div class="k">विद्यार्थी</div><div class="v">${students.length}</div><div class="sub">सामुदायिक ${a.schoolType["सामुदायिक (सरकारी)"]||0} · निजी ${a.schoolType["निजी"]||0} · विश्वविद्यालय ${a.schoolType["विश्वविद्यालय"]||0}</div></div>
-    <div class="card kpi amber"><div class="k">स्वास्थ्य / विशेष आवश्यकता</div><div class="v">${a.health}</div><div class="sub">सदस्य</div></div>
-    <div class="card kpi red"><div class="k">५ वर्षमुनिका</div><div class="v">${a.age["०–५"]||0}</div><div class="sub">६० माथि ${a.elderly}</div></div>
-  </div>
-  <div class="card" style="margin-bottom:16px"><div class="hd"><h2 style="font-size:1.05rem">विद्यार्थी तथा विद्यालय विवरण</h2><span class="en">Students &amp; schools</span></div><div class="bd tablewrap">
-    <table><thead><tr><th>विद्यार्थी</th><th>उमेर</th><th>नाता</th><th>विद्यालय / क्याम्पस</th><th>कक्षा</th><th>प्रकार</th><th>वार्षिक शुल्क</th><th>असर</th><th>परिवार</th></tr></thead><tbody>
-    ${students.map(({r,m})=>`<tr class="row" data-id="${r.id}"><td><b>${esc(m.name)}</b></td><td class="num">${esc(m.age)}</td><td>${esc(m.relation)}</td><td>${esc(m.school)||"—"}</td><td>${esc(m.grade)||"—"}</td><td>${esc(m.schoolType)||"—"}</td><td class="num">${m.fee?"रु. "+Number(m.fee).toLocaleString("en-IN"):"—"}</td><td>${esc(m.studyImpact)||"—"}</td><td>${esc(r.employee.name)}</td></tr>`).join("")||`<tr><td colspan="9" class="empty">विद्यार्थी छैनन्</td></tr>`}
-    </tbody></table></div></div>
-  <div class="card"><div class="hd"><h2 style="font-size:1.05rem">सबै परिवार सदस्य</h2><span class="en">All household members</span></div><div class="bd tablewrap">
-    <table><thead><tr><th>नाम</th><th>नाता</th><th>उमेर</th><th>लिङ्ग</th><th>पेसा / अवस्था</th><th>आश्रित</th><th>स्वास्थ्य</th><th>परिवार (कर्मचारी)</th></tr></thead><tbody>
-    ${rows.map(({r,m})=>`<tr class="row" data-id="${r.id}"><td>${esc(m.name)}</td><td>${esc(m.relation)}</td><td class="num">${esc(m.age)}</td><td>${esc(m.gender)||"—"}</td><td>${esc(m.occupation)}</td><td>${m.dependent?"हो":"होइन"}</td><td>${esc(m.health)||"—"}</td><td>${esc(r.employee.name)}</td></tr>`).join("")}
-    </tbody></table></div></div>`;
-  p.addEventListener("click",e=>{const tr=e.target.closest("tr.row"); if(tr) openDetail(tr.dataset.id);});
-}
-
-/* ---- Detail drawer ---- */
-function openDetail(id){
-  const r=DATA.find(x=>x.id===id); if(!r) return;
-  const row=(k,v)=>`<dt>${k}</dt><dd>${v||"—"}</dd>`;
-  const ov=document.createElement("div"); ov.className="overlay";
-  ov.innerHTML=`<div class="drawer" role="dialog" aria-modal="true">
-    <div class="dh"><div><div class="hint num">${esc(r.ref)} · ${fmtDate(r.createdAt)}</div><h2 style="font-size:1.15rem">${esc(r.employee.name)} <span class="pill ${STATUS[r.employee.status].cls}">${STATUS[r.employee.status].ne}</span></h2></div>
-      <div style="display:flex;gap:8px" class="no-print"><button class="btn sec sm" id="d-print">छाप्नुहोस्</button><button class="btn danger sm" id="d-del">हटाउनुहोस्</button><button class="btn sec sm" id="d-close">बन्द</button></div></div>
-    <div class="db">
-      <div class="sec"><h3>Employee · कर्मचारी</h3><dl class="dl">${row("पद",esc(r.employee.post))}${row("सेवाको किसिम",esc(r.employee.type))}${row("कर्मचारी सङ्केत",esc(r.employee.empId))}${row("उमेर / लिङ्ग",[r.employee.age,r.employee.gender].filter(Boolean).map(esc).join(" / "))}${row("जन्म मिति (वि.सं.)",esc(r.employee.dob))}${row("वैवाहिक स्थिति",esc(r.employee.marital))}${row("सेवा अवधि",r.employee.serviceYears?esc(r.employee.serviceYears)+" वर्ष":"")}${row("घटना मिति",esc(r.employee.incidentDate))}${row("एक मात्र आयस्रोत",r.employee.soleEarner==="yes"?"हो":r.employee.soleEarner==="no"?"होइन":"")}</dl>${r.employee.lastInfo?`<div class="quote">${esc(r.employee.lastInfo)}</div>`:""}</div>
-      <div class="sec"><h3>Applicant · निवेदक</h3><dl class="dl">${row("नाम",esc(r.applicant.name))}${row("नाता",esc(r.applicant.relation))}${row("मोबाइल",`<span class="num">${esc(r.applicant.phone)}</span>${r.applicant.altPhone?` · <span class="num">${esc(r.applicant.altPhone)}</span>`:""}`)}${row("नागरिकता नं.",esc(r.applicant.citizenship))}${row("जन्म मिति",esc(r.applicant.dob))}${row("सम्पर्क समय",esc(r.applicant.contactTime))}${row("हालको ठेगाना",esc(fmtAddr(r.applicant.current)))}${row("स्थायी ठेगाना",esc(fmtAddr(r.applicant.origin)))}</dl></div>
-      <div class="sec"><h3>Household · परिवार (${r.members.length} सदस्य)</h3><div class="tablewrap"><table><thead><tr><th>नाता</th><th>नाम</th><th>उमेर</th><th>पेसा</th><th>विद्यालय / कक्षा</th><th>स्वास्थ्य</th></tr></thead><tbody>${r.members.map(m=>`<tr><td>${esc(m.relation)}</td><td>${esc(m.name)}${m.dependent?"":' <span class="hint">(गैर-आश्रित)</span>'}</td><td class="num">${esc(m.age)}${m.gender?" · "+esc(m.gender):""}</td><td>${esc(m.occupation)}</td><td>${m.occupation==="विद्यार्थी"?[m.school,m.grade,m.schoolType,m.fee?"रु. "+Number(m.fee).toLocaleString("en-IN"):"",m.studyImpact].filter(Boolean).map(esc).join(" · "):"—"}</td><td>${esc(m.health)||"—"}</td></tr>`).join("")||'<tr><td colspan="6" class="hint">सदस्य विवरण छैन</td></tr>'}</tbody></table></div></div>
-      <div class="sec"><h3>Economy · आर्थिक अवस्था</h3><dl class="dl">${row("मासिक आम्दानी",esc(r.economy.incomeBand))}${row("आवास",esc(r.economy.housing))}${row("अन्य आयस्रोत",r.economy.otherIncome.map(esc).join(", "))}${row("ऋण",r.economy.hasLoan?`छ — रु. ${Number(r.economy.loanAmount||0).toLocaleString("en-IN")} (${esc(r.economy.loanSource)||"स्रोत उल्लेख छैन"})`:"छैन")}</dl></div>
-      <div class="sec"><h3>Problems &amp; requests · समस्या तथा माग</h3>
-        ${Object.entries(r.problems).sort((x,y)=>(x[1].priority==="high"?0:1)-(y[1].priority==="high"?0:1)).map(([k,v])=>`<div style="margin-bottom:12px"><b>${CATS.find(c=>c.id===k)?.ne}</b> <span class="pill ${PRIO[v.priority].cls}">${PRIO[v.priority].ne}</span>${v.details?`<div class="quote">${esc(v.details)}</div>`:""}</div>`).join("")}
-        <dl class="dl" style="margin-top:8px">${row("मुख्य माग",esc(r.mainAsk))}${row("तत्काल आवश्यकता",esc(r.urgentNeed))}${row("दीर्घकालीन अपेक्षा",esc(r.longTerm))}${row("अन्य",esc(r.otherNotes))}</dl></div>
-      <div class="sec"><h3>Documents · कागजात</h3><div>${r.docs.length?r.docs.map(d=>`<span class="pill cat">${esc(d)}</span>`).join(""):'<span class="hint">कुनै कागजात उल्लेख छैन</span>'}</div><p class="hint" style="margin-top:8px">उपलब्ध नभएका: ${DOCS.filter(d=>!r.docs.includes(d)).join(", ")||"—"}</p></div>
-    </div></div>`;
-  document.body.appendChild(ov);
-  const close=()=>ov.remove();
-  ov.addEventListener("click",e=>{ if(e.target===ov) close(); });
-  $("#d-close",ov).onclick=close;
-  $("#d-print",ov).onclick=()=>window.print();
-  $("#d-del",ov).onclick=e=>{ if(e.target.dataset.armed){ Store.remove(r.id); close(); toast("रेकर्ड हटाइयो (यस यन्त्रबाट)"); renderAdmin(); } else { e.target.dataset.armed="1"; e.target.textContent="निश्चित हुनुहुन्छ? फेरि थिच्नुहोस्"; } };
-  document.addEventListener("keydown",function esc_(e){ if(e.key==="Escape"){close();document.removeEventListener("keydown",esc_);} });
-}
-
-/* ---- Settings / export ---- */
-function toCSV(){
-  const H=["ref","submitted","employee_name","status","post","emp_type","emp_id","emp_age","emp_gender","incident_date","service_years","sole_earner","applicant","relation","phone","alt_phone","citizenship","contact_time","current_address","origin_address","origin_district","members","dependents","children_u18","students","income_band","housing","other_income","has_loan","loan_amount","loan_source","main_ask","urgent_need","long_term","other_notes","docs",...CATS.map(c=>c.id+"_priority"),...CATS.map(c=>c.id+"_details"),"members_detail","sample"];
-  const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
-  const lines=[H.join(",")];
-  DATA.forEach(r=>{ const m=r.members||[]; lines.push([r.ref,r.createdAt,r.employee.name,STATUS[r.employee.status].en,r.employee.post,r.employee.type,r.employee.empId,r.employee.age,r.employee.gender,r.employee.incidentDate,r.employee.serviceYears,r.employee.soleEarner,r.applicant.name,r.applicant.relation,r.applicant.phone,r.applicant.altPhone,r.applicant.citizenship,r.applicant.contactTime,fmtAddr(r.applicant.current),fmtAddr(r.applicant.origin),r.applicant.origin?.district,m.length,m.filter(x=>x.dependent).length,m.filter(x=>Number(x.age)<18).length,m.filter(x=>x.occupation==="विद्यार्थी").length,r.economy.incomeBand,r.economy.housing,r.economy.otherIncome.join("; "),r.economy.hasLoan?"yes":"no",r.economy.loanAmount,r.economy.loanSource,r.mainAsk,r.urgentNeed,r.longTerm,r.otherNotes,r.docs.join("; "),...CATS.map(c=>r.problems[c.id]?.priority||""),...CATS.map(c=>r.problems[c.id]?.details||""),m.map(x=>`${x.relation} ${x.name} (${x.age}${x.gender?", "+x.gender:""}) ${x.occupation}${x.school?" @ "+x.school+" "+x.grade:""}${x.health?" ["+x.health+"]":""}`).join(" | "),r.sample?"yes":""].map(q).join(",")); });
-  return "﻿"+lines.join("\r\n");
-}
-function download(name,content,type){ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
-function renderSettings(p){
-  const stamp=new Date().toISOString().slice(0,10);
-  p.innerHTML=`<div class="settings">
-    <div class="card"><div class="hd"><h2 style="font-size:1.05rem">तथ्याङ्क निर्यात</h2><span class="en">Export</span></div><div class="bd">
-      <p class="hint">Excel मा खोल्न CSV, पूरा विवरण/अर्को यन्त्रमा मिलाउन JSON।</p>
-      <button class="btn navy" id="x-csv">CSV डाउनलोड (Excel)</button>
-      <button class="btn sec" id="x-json">JSON डाउनलोड (पूरा तथ्याङ्क)</button>
-    </div></div>
-    <div class="card"><div class="hd"><h2 style="font-size:1.05rem">अर्को यन्त्रबाट तथ्याङ्क मिलाउनुहोस्</h2><span class="en">Import &amp; merge JSON</span></div><div class="bd">
-      <p class="hint">समितिका अन्य सदस्यले निर्यात गरेको JSON फाइल छानेपछि नयाँ रेकर्ड यहाँ थपिन्छन्; एउटै रेकर्ड दोहोरिँदैन।</p>
-      <input type="file" id="x-import" accept="application/json" class="inp">
-    </div></div>
-    <div class="card"><div class="hd"><h2 style="font-size:1.05rem">केन्द्रीय सर्भर</h2><span class="en">Central storage</span></div><div class="bd">
-      <p>${CONFIG.API_URL?`जोडिएको: <span class="num" style="word-break:break-all">${esc(CONFIG.API_URL)}</span>`:"हाल कुनै केन्द्रीय सर्भर जोडिएको छैन — प्रत्येक यन्त्रले आफ्नै तथ्याङ्क राख्छ।"}</p>
-      <p class="hint">परिवारले आ-आफ्नो मोबाइलबाट फारम भर्दा तथ्याङ्क एकै ठाउँमा जम्मा गर्न <b>backend/Code.gs</b> (Google Sheets) सेटअप गरी index.html को CONFIG.API_URL मा लिङ्क राख्नुहोस्। विधि README.md मा छ।</p>
-    </div></div>
-    <div class="card"><div class="hd"><h2 style="font-size:1.05rem">नयाँ पासवर्डको ह्यास</h2><span class="en">Password hash generator</span></div><div class="bd">
-      <p class="hint">पासवर्ड फाइलमा राखिँदैन; यसको SHA-256 ह्यास मात्र राखिन्छ। नयाँ पासवर्ड लेखेर ह्यास बनाउनुहोस्, index.html को CONFIG.ADMIN_PASS_SHA256 मा टाँस्नुहोस्, र Google Apps Script को ADMIN_KEY प्रोपर्टीमा नयाँ पासवर्ड नै राख्नुहोस्।</p>
-      <input class="inp" id="np1" type="password" placeholder="नयाँ पासवर्ड (कम्तीमा १२ अक्षर)" autocomplete="new-password">
-      <button class="btn sec" id="np-hash">ह्यास बनाउनुहोस्</button>
-      <input class="inp num" id="np-out" readonly placeholder="ह्यास यहाँ देखिनेछ" style="font-size:.8rem">
-    </div></div>
-    <div class="card"><div class="hd"><h2 style="font-size:1.05rem">परीक्षण</h2><span class="en">Testing</span></div><div class="bd">
-      <p class="hint">ड्यासबोर्ड कस्तो देखिन्छ हेर्न काल्पनिक ८ परिवारको नमुना तथ्याङ्क लोड गर्न सकिन्छ। यी रेकर्ड "नमुना" चिन्हसहित देखिन्छन् र एकै क्लिकमा हट्छन्।</p>
-      <button class="btn sec" id="x-sample">नमुना तथ्याङ्क लोड गर्नुहोस्</button>
-    </div></div>
-    <div class="card"><div class="hd"><h2 style="font-size:1.05rem">यस यन्त्रको तथ्याङ्क मेटाउनुहोस्</h2><span class="en">Danger zone</span></div><div class="bd">
-      <p class="hint">यस ब्राउजरमा सुरक्षित सबै ${DATA.length} रेकर्ड मेटिन्छन्। पहिले निर्यात गर्नुहोस्।</p>
-      <button class="btn danger" id="x-clear">सबै स्थानीय तथ्याङ्क मेटाउनुहोस्</button>
-    </div></div>
-  </div>`;
-  $("#x-csv").onclick=()=>download(`rasuwa-families-${stamp}.csv`,toCSV(),"text/csv;charset=utf-8");
-  $("#x-json").onclick=()=>download(`rasuwa-families-${stamp}.json`,JSON.stringify(DATA,null,2),"application/json");
-  $("#x-import").onchange=async e=>{ const f=e.target.files[0]; if(!f) return; try{ const arr=JSON.parse(await f.text()); if(!Array.isArray(arr)) throw 0; let list=Store.local(), added=0; arr.forEach(r=>{ if(r&&r.id&&r.employee){ if(!list.some(x=>x.id===r.id)) added++; list=Store.upsert(list,r);} }); Store.saveLocal(list); toast(`${added} नयाँ रेकर्ड थपियो`); renderAdmin(); }catch(err){ toast("फाइल पढ्न सकिएन — मान्य JSON होइन"); } };
-  $("#np-hash").onclick=async()=>{ const a=$("#np1").value; if(a.length<12) return toast("पासवर्ड कम्तीमा १२ अक्षरको हुनुपर्छ"); try{ $("#np-out").value=await sha256(a); $("#np-out").select(); toast("ह्यास तयार — CONFIG मा टाँस्नुहोस्"); }catch(e){ toast("यो ब्राउजरमा ह्यास बनाउन सकिएन"); } };
-  $("#x-sample").onclick=()=>{ let list=Store.local(); sampleData().forEach(r=>list=Store.upsert(list,r)); Store.saveLocal(list); toast("नमुना तथ्याङ्क लोड भयो"); renderAdmin(); };
-  $("#x-clear").onclick=e=>{ if(e.target.dataset.armed){ Store.clear(); toast("सबै स्थानीय तथ्याङ्क मेटियो"); renderAdmin(); } else { e.target.dataset.armed="1"; e.target.textContent="निश्चित हुनुहुन्छ? फेरि थिच्नुहोस्"; } };
-}
-
-/* ---- Clearly fictional sample data for testing the dashboard ---- */
-function sampleData(){
-  const mk=(i,o)=>({id:"sample-"+i,ref:"MOF-RSW-TEST-"+String(i).padStart(2,"0"),createdAt:new Date(Date.now()-i*86400000*1.3).toISOString(),source:"sample",sample:true,consent:true,docs:[],urgentNeed:"",longTerm:"",otherNotes:"",...o});
-  const addr=(d,m,w,p="बागमती")=>({province:p,district:d,municipality:m,ward:String(w),tole:""});
-  return [
-    mk(1,{applicant:{name:"उदाहरण निवेदक १",relation:"पत्नी",phone:"9800000001",altPhone:"",citizenship:"",dob:"",contactTime:"जुनसुकै समय",current:addr("रसुवा","उत्तरगया गाउँपालिका",3),origin:addr("रसुवा","उत्तरगया गाउँपालिका",3)},employee:{name:"उदाहरण कर्मचारी १",status:"missing",post:"खरिदार",type:"स्थायी",empId:"",gender:"पुरुष",age:"38",dob:"",marital:"विवाहित",incidentDate:"",serviceYears:"9",soleEarner:"yes",lastInfo:"कार्यालय परिसरमा ड्युटीमा रहेका।"},members:[{relation:"छोरा",name:"उ. छोरा",age:"9",gender:"पुरुष",occupation:"विद्यार्थी",health:"",dependent:true,school:"श्री उत्तरगया मा.वि.",grade:"कक्षा ४",schoolType:"सामुदायिक (सरकारी)",fee:"3000",studyImpact:""},{relation:"छोरी",name:"उ. छोरी",age:"5",gender:"महिला",occupation:"बालबालिका (विद्यालय नगएको)",health:"",dependent:true,school:"",grade:"",schoolType:"",fee:"",studyImpact:""},{relation:"आमा",name:"उ. आमा",age:"66",gender:"महिला",occupation:"वृद्ध / आश्रित",health:"उच्च रक्तचाप",dependent:true,school:"",grade:"",schoolType:"",fee:"",studyImpact:""}],economy:{incomeBand:"रु. ३०,००० – ५०,०००",housing:"आफ्नै घर (बाढीबाट क्षति)",otherIncome:["कृषि"],hasLoan:true,loanAmount:"450000",loanSource:"सहकारी"},problems:{search:{priority:"high",details:"शव अझै फेला परेको छैन; खोजी जारी राख्न अनुरोध।"},relief:{priority:"high",details:"तत्काल राहत रकम।"},education:{priority:"med",details:"छोराको पढाइ खर्च।"},debt:{priority:"med",details:"सहकारीको ऋण मिनाहा वा सहुलियत।"}},mainAsk:"खोजी जारी राखियोस् र परिवारलाई तत्काल राहत दिइयोस्।"}),
-    mk(2,{applicant:{name:"उदाहरण निवेदक २",relation:"बुबा",phone:"9800000002",altPhone:"",citizenship:"",dob:"",contactTime:"दिउँसो (१०–४ बजे)",current:addr("नुवाकोट","बिदुर नगरपालिका",5),origin:addr("नुवाकोट","बिदुर नगरपालिका",5)},employee:{name:"उदाहरण कर्मचारी २",status:"dead",post:"कार्यालय सहयोगी",type:"करार",empId:"",gender:"पुरुष",age:"42",dob:"",marital:"विवाहित",incidentDate:"",serviceYears:"2",soleEarner:"yes",lastInfo:""},members:[{relation:"बुबा",name:"उ. बुबा",age:"61",gender:"पुरुष",occupation:"स्वरोजगार / कृषि",health:"",dependent:true,school:"",grade:"",schoolType:"",fee:"",studyImpact:""},{relation:"आमा",name:"उ. आमा",age:"56",gender:"महिला",occupation:"गृहिणी",health:"",dependent:true,school:"",grade:"",schoolType:"",fee:"",studyImpact:""},{relation:"छोरी",name:"उ. छोरी",age:"19",gender:"महिला",occupation:"विद्यार्थी",health:"",dependent:true,school:"त्रिचन्द्र क्याम्पस",grade:"स्नातक १",schoolType:"विश्वविद्यालय",fee:"25000",studyImpact:"शुल्क तिर्न कठिन"}],economy:{incomeBand:"रु. १५,००० – ३०,०००",housing:"आफ्नै घर (सुरक्षित)",otherIncome:["कृषि","पशुपालन"],hasLoan:false,loanAmount:"",loanSource:""},problems:{benefits:{priority:"high",details:"करार कर्मचारीको बिमा/उपदान पाइन्छ कि पाइँदैन स्पष्ट पारियोस्।"},relief:{priority:"high",details:""},employment:{priority:"med",details:"छोरीलाई पढाइ सकेपछि रोजगारीको अवसर।"}},mainAsk:"करार कर्मचारीलाई पनि स्थायी सरहको क्षतिपूर्ति।"}),
-    mk(3,{applicant:{name:"उदाहरण निवेदक ३",relation:"पति",phone:"9800000003",altPhone:"",citizenship:"",dob:"",contactTime:"जुनसुकै समय",current:addr("काठमाडौँ","तारकेश्वर नगरपालिका",8),origin:addr("धादिङ","नीलकण्ठ नगरपालिका",2)},employee:{name:"उदाहरण कर्मचारी ३",status:"missing",post:"नायब सुब्बा",type:"स्थायी",empId:"",gender:"महिला",age:"34",dob:"",marital:"विवाहित",incidentDate:"",serviceYears:"7",soleEarner:"no",lastInfo:""},members:[{relation:"छोरी",name:"उ. छोरी",age:"7",gender:"महिला",occupation:"विद्यार्थी",health:"",dependent:true,school:"निजी बोर्डिङ स्कुल",grade:"कक्षा २",schoolType:"निजी",fee:"60000",studyImpact:""},{relation:"छोरा",name:"उ. छोरा",age:"2",gender:"पुरुष",occupation:"बालबालिका (विद्यालय नगएको)",health:"",dependent:true,school:"",grade:"",schoolType:"",fee:"",studyImpact:""}],economy:{incomeBand:"रु. ५०,००० – १,००,०००",housing:"भाडामा",otherIncome:["अन्य सदस्यको तलब"],hasLoan:true,loanAmount:"1200000",loanSource:"बैंक (घर कर्जा)"},problems:{legal:{priority:"high",details:"बेपत्ता प्रमाणीकरण नहुँदा बैंक, बिमा केही प्रक्रिया अघि बढ्दैन।"},psychosocial:{priority:"med",details:"बालबालिकालाई परामर्श।"},debt:{priority:"high",details:"घर कर्जाको किस्ता।"}},mainAsk:"बेपत्ताको कानुनी स्थिति छिटो टुङ्गो लगाइयोस्।"}),
-    mk(4,{applicant:{name:"उदाहरण निवेदक ४",relation:"पत्नी",phone:"9800000004",altPhone:"",citizenship:"",dob:"",contactTime:"साँझ (४–८ बजे)",current:addr("रसुवा","गोसाईकुण्ड गाउँपालिका",1),origin:addr("रसुवा","गोसाईकुण्ड गाउँपालिका",1)},employee:{name:"उदाहरण कर्मचारी ४",status:"dead",post:"सुरक्षा गार्ड",type:"ज्यालादारी",empId:"",gender:"पुरुष",age:"45",dob:"",marital:"विवाहित",incidentDate:"",serviceYears:"4",soleEarner:"yes",lastInfo:""},members:[{relation:"पत्नी",name:"उ. पत्नी",age:"41",gender:"महिला",occupation:"गृहिणी",health:"",dependent:true,school:"",grade:"",schoolType:"",fee:"",studyImpact:""},{relation:"छोरा",name:"उ. छोरा",age:"16",gender:"पुरुष",occupation:"विद्यार्थी",health:"",dependent:true,school:"श्री धुन्चे मा.वि.",grade:"कक्षा १०",schoolType:"सामुदायिक (सरकारी)",fee:"5000",studyImpact:"SEE परीक्षा नजिक"},{relation:"छोरा",name:"उ. छोरा २",age:"13",gender:"पुरुष",occupation:"विद्यार्थी",health:"",dependent:true,school:"श्री धुन्चे मा.वि.",grade:"कक्षा ७",schoolType:"सामुदायिक (सरकारी)",fee:"4000",studyImpact:""},{relation:"आमा",name:"उ. आमा",age:"78",gender:"महिला",occupation:"वृद्ध / आश्रित",health:"हिँडडुल गर्न कठिन",dependent:true,school:"",grade:"",schoolType:"",fee:"",studyImpact:""}],economy:{incomeBand:"रु. १५,००० भन्दा कम",housing:"अस्थायी आश्रय",otherIncome:["कुनै छैन"],hasLoan:true,loanAmount:"80000",loanSource:"साहु"},problems:{housing:{priority:"high",details:"घर बगाएको; अस्थायी टहरामा।"},relief:{priority:"high",details:""},economic:{priority:"high",details:"आम्दानी शून्य।"},employment:{priority:"med",details:"पत्नीलाई कुनै रोजगारी।"},education:{priority:"med",details:""}},mainAsk:"आवास र जीविकोपार्जनको व्यवस्था।"}),
-    mk(5,{applicant:{name:"उदाहरण निवेदक ५",relation:"पत्नी",phone:"9800000005",altPhone:"",citizenship:"",dob:"",contactTime:"जुनसुकै समय",current:addr("सिन्धुपाल्चोक","चौतारा साँगाचोकगढी न.पा.",4),origin:addr("सिन्धुपाल्चोक","चौतारा साँगाचोकगढी न.पा.",4)},employee:{name:"उदाहरण कर्मचारी ५",status:"dead",post:"भन्सार अधिकृत",type:"स्थायी",empId:"",gender:"पुरुष",age:"41",dob:"",marital:"विवाहित",incidentDate:"",serviceYears:"12",soleEarner:"no",lastInfo:""},members:[{relation:"पत्नी",name:"उ. पत्नी",age:"37",gender:"महिला",occupation:"रोजगार",health:"",dependent:false,school:"",grade:"",schoolType:"",fee:"",studyImpact:""},{relation:"छोरी",name:"उ. छोरी",age:"11",gender:"महिला",occupation:"विद्यार्थी",health:"",dependent:true,school:"निजी स्कुल",grade:"कक्षा ६",schoolType:"निजी",fee:"45000",studyImpact:""}],economy:{incomeBand:"रु. ५०,००० – १,००,०००",housing:"आफ्नै घर (सुरक्षित)",otherIncome:["अन्य सदस्यको तलब"],hasLoan:false,loanAmount:"",loanSource:""},problems:{benefits:{priority:"high",details:"सञ्चय कोष, उपदान र बिमा रकम छिटो भुक्तानी।"},education:{priority:"med",details:"छोरीको निजी विद्यालय शुल्क।"}},mainAsk:"सेवा सुविधाको छिटो भुक्तानी र छोरीको शिक्षामा सहयोग।"}),
-    mk(6,{applicant:{name:"उदाहरण निवेदक ६",relation:"आमा",phone:"9800000006",altPhone:"",citizenship:"",dob:"",contactTime:"बिहान (७–१० बजे)",current:addr("रसुवा","कालिका गाउँपालिका",2),origin:addr("रसुवा","कालिका गाउँपालिका",2)},employee:{name:"उदाहरण कर्मचारी ६",status:"missing",post:"हलुका सवारी चालक",type:"करार",empId:"",gender:"पुरुष",age:"31",dob:"",marital:"विवाहित",incidentDate:"",serviceYears:"3",soleEarner:"yes",lastInfo:""},members:[{relation:"पत्नी",name:"उ. पत्नी",age:"28",gender:"महिला",occupation:"गृहिणी",health:"गर्भवती",dependent:true,school:"",grade:"",schoolType:"",fee:"",studyImpact:""},{relation:"छोरा",name:"उ. छोरा",age:"3",gender:"पुरुष",occupation:"बालबालिका (विद्यालय नगएको)",health:"",dependent:true,school:"",grade:"",schoolType:"",fee:"",studyImpact:""},{relation:"आमा",name:"उ. आमा",age:"58",gender:"महिला",occupation:"स्वरोजगार / कृषि",health:"",dependent:true,school:"",grade:"",schoolType:"",fee:"",studyImpact:""},{relation:"बुबा",name:"उ. बुबा",age:"63",gender:"पुरुष",occupation:"वृद्ध / आश्रित",health:"दम",dependent:true,school:"",grade:"",schoolType:"",fee:"",studyImpact:""}],economy:{incomeBand:"रु. १५,००० – ३०,०००",housing:"आफ्नै घर (सुरक्षित)",otherIncome:["कृषि"],hasLoan:true,loanAmount:"200000",loanSource:"सहकारी"},problems:{search:{priority:"high",details:""},relief:{priority:"high",details:"गर्भवती बुहारीको लागि तत्काल सहयोग।"},health:{priority:"high",details:"सुत्केरी हुने बेला नजिक।"},economic:{priority:"med",details:""}},mainAsk:"छोराको खोजी र परिवारलाई मासिक भरणपोषण।"}),
-    mk(7,{applicant:{name:"उदाहरण निवेदक ७",relation:"पत्नी",phone:"9800000007",altPhone:"",citizenship:"",dob:"",contactTime:"जुनसुकै समय",current:addr("चितवन","भरतपुर महानगरपालिका",10),origin:addr("गोरखा","गोरखा नगरपालिका",6,"गण्डकी")},employee:{name:"उदाहरण कर्मचारी ७",status:"dead",post:"कम्प्युटर अपरेटर",type:"स्थायी",empId:"",gender:"पुरुष",age:"36",dob:"",marital:"विवाहित",incidentDate:"",serviceYears:"8",soleEarner:"yes",lastInfo:""},members:[{relation:"पत्नी",name:"उ. पत्नी",age:"33",gender:"महिला",occupation:"बेरोजगार",health:"",dependent:true,school:"",grade:"",schoolType:"",fee:"",studyImpact:""},{relation:"छोरी",name:"उ. छोरी",age:"8",gender:"महिला",occupation:"विद्यार्थी",health:"",dependent:true,school:"सामुदायिक वि.",grade:"कक्षा ३",schoolType:"सामुदायिक (सरकारी)",fee:"2500",studyImpact:""},{relation:"छोरी",name:"उ. छोरी २",age:"6",gender:"महिला",occupation:"विद्यार्थी",health:"",dependent:true,school:"सामुदायिक वि.",grade:"कक्षा १",schoolType:"सामुदायिक (सरकारी)",fee:"2000",studyImpact:""}],economy:{incomeBand:"रु. ३०,००० – ५०,०००",housing:"भाडामा",otherIncome:["कुनै छैन"],hasLoan:false,loanAmount:"",loanSource:""},problems:{employment:{priority:"high",details:"पत्नीलाई सरकारी सेवामा रोजगारी (स्नातक उत्तीर्ण)।"},benefits:{priority:"high",details:"सञ्चय कोष, उपदान, बिमा छिटो भुक्तानी।"},education:{priority:"med",details:"दुई छोरीको छात्रवृत्ति।"}},mainAsk:"परिवारको एक सदस्यलाई रोजगारी र सेवा सुविधाको छिटो भुक्तानी।"}),
-    mk(8,{applicant:{name:"उदाहरण निवेदक ८",relation:"बुबा",phone:"9800000008",altPhone:"",citizenship:"",dob:"",contactTime:"दिउँसो (१०–४ बजे)",current:addr("रसुवा","नौकुण्ड गाउँपालिका",5),origin:addr("रसुवा","नौकुण्ड गाउँपालिका",5)},employee:{name:"उदाहरण कर्मचारी ८",status:"missing",post:"कार्यालय सहयोगी",type:"ज्यालादारी",empId:"",gender:"पुरुष",age:"24",dob:"",marital:"अविवाहित",incidentDate:"",serviceYears:"1",soleEarner:"no",lastInfo:""},members:[{relation:"बुबा",name:"उ. बुबा",age:"52",gender:"पुरुष",occupation:"स्वरोजगार / कृषि",health:"",dependent:false,school:"",grade:"",schoolType:"",fee:"",studyImpact:""},{relation:"आमा",name:"उ. आमा",age:"49",gender:"महिला",occupation:"गृहिणी",health:"",dependent:false,school:"",grade:"",schoolType:"",fee:"",studyImpact:""}],economy:{incomeBand:"रु. १५,००० – ३०,०००",housing:"आफ्नै घर (सुरक्षित)",otherIncome:["कृषि","पशुपालन"],hasLoan:false,loanAmount:"",loanSource:""},problems:{search:{priority:"high",details:"खोजी जारी राखियोस्।"},legal:{priority:"med",details:"ज्यालादारी भए पनि कर्मचारी मानिने कि नमानिने।"},psychosocial:{priority:"low",details:""}},mainAsk:"ज्यालादारी कर्मचारीलाई पनि समान व्यवहार।"}),
-  ];
-}
-
-/* ADMIN:END */
 
 route();
 </script>

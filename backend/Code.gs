@@ -11,7 +11,9 @@
  *  3. Deploy → New deployment → type "Web app".
  *       Execute as: Me        Who has access: Anyone
  *  4. Copy the Web app URL and paste it into CONFIG.API_URL in index.html.
- *  5. Re-deploy (new version) whenever you change this script.
+ *  5. Project Settings (gear icon) → Script Properties → Add property:
+ *       ADMIN_KEY = the dashboard admin password. Without it nobody can read records.
+ *  6. Re-deploy (new version) whenever you change this script.
  */
 
 var SHEET_NAME = "Submissions";
@@ -35,6 +37,11 @@ function json_(obj) {
 function doGet(e) {
   var action = (e && e.parameter && e.parameter.action) || "list";
   if (action !== "list") return json_({ ok: false, error: "unknown action" });
+  // Reading records requires the admin password, stored as the Script Property ADMIN_KEY
+  // (Project Settings → Script Properties). It must equal the dashboard login password.
+  var expected = PropertiesService.getScriptProperties().getProperty("ADMIN_KEY");
+  var given = (e && e.parameter && e.parameter.key) || "";
+  if (!expected || given !== expected) return json_({ ok: false, error: "unauthorised" });
   var sh = getSheet_();
   var last = sh.getLastRow();
   if (last < 2) return json_({ ok: true, records: [] });

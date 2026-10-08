@@ -10,6 +10,12 @@ Rasuwa flood.
 | `backend/Code.gs` | Optional Google Sheets backend so submissions from many phones land in one place |
 | `README.md` | This guide |
 
+## Public link for families
+
+Once GitHub Pages is enabled on this repository the form is at:
+
+`https://mofnepal.github.io/rasuwa-family-feedback/#form`
+
 ## 1. Quick start (single device, no setup)
 
 Open `index.html` in Chrome, Edge, Safari or Firefox. It works from the file
@@ -18,16 +24,12 @@ itself; internet is needed only for fonts and the chart library.
 * **Family form** → `index.html#form`
 * **Ministry dashboard** → `index.html#admin`
 
-Default login:
-
-```
-Username: mof_admin
-Password: MoF-Rasuwa-VaunKYDwKs#2083
-```
-
-Change both in the `CONFIG` block at the top of the `<script>` in `index.html`
-before sharing the file. The dashboard also has a "Change password" card that
-applies to that browser only.
+Login: username `mof_admin`; the password is in `ADMIN-PASSWORD.txt`, which is
+gitignored and must never be committed. `index.html` holds only a SHA-256 hash of
+the password, so the file (and this repository) can be public. To rotate the
+password: log in → निर्यात तथा सेटिङ → "नयाँ पासवर्डको ह्यास" → paste the hash
+into `CONFIG.ADMIN_PASS_SHA256`, and set the new password as the `ADMIN_KEY`
+Script Property in Apps Script.
 
 In this mode every submission is stored in that browser's local storage.
 This works well when committee members fill the form with families in person or
@@ -46,8 +48,11 @@ account the Ministry controls.
 3. **Deploy → New deployment**. Type: *Web app*. Execute as: *Me*. Who has
    access: *Anyone*. Click Deploy and authorise when asked.
 4. Copy the Web app URL (ends in `/exec`).
-5. In `index.html`, set `API_URL: "https://script.google.com/macros/s/.../exec"`.
-6. Host `index.html` anywhere families can reach it (the Ministry web server,
+5. In Apps Script, open Project Settings (gear) → Script Properties → add
+   `ADMIN_KEY` = the dashboard admin password. Reading records requires it;
+   submitting does not.
+6. In `index.html`, set `API_URL: "https://script.google.com/macros/s/.../exec"`.
+7. Host `index.html` anywhere families can reach it (the Ministry web server,
    GitHub Pages, Netlify Drop, or even sent as a file). Share the link ending in
    `#form`.
 
@@ -103,13 +108,16 @@ can quote later.
 
 ## 5. Security notes
 
-* The login is a convenience gate in the browser, not real authentication.
-  Anyone with the HTML file can read the password. Do not publish the dashboard
-  on a public URL with real data unless it sits behind the Ministry's own login
-  or a protected network.
+* The dashboard password is never stored in the HTML, only its SHA-256 hash, and
+  the Google Sheets script refuses to return records without the same password.
+  Keep the password long and random, share it only with committee members, and
+  rotate it if a member leaves.
+* The browser gate does not protect data already on a device: anyone using a
+  committee laptop can open its local records. Lock those laptops.
 * The Google Sheet holds personal data of bereaved families. Restrict sheet
   sharing to the committee and keep the Apps Script URL off public pages
   (families only need the form link; the URL inside the file is still visible to
-  anyone who views source, so prefer hosting the form on a Ministry domain).
+  anyone who views source, which is acceptable because it only accepts
+  submissions and reads nothing without the admin password).
 * For long-term use, the same form and dashboard can be pointed at a proper
   Ministry database by replacing the `Store` object in `index.html`.
